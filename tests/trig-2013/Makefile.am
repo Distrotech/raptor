@@ -498,11 +498,11 @@ check-good-trig: build-rapper $(check_good_trig_deps)
 	  name=`basename $$test .trig` ; \
 	  baseuri=$(BASE_URI)$$test; \
 	  $(RECHO) $(RECHO_N) "Checking $$test $(RECHO_C)"; \
-	  $(RAPPER) -q -i trig -o ntriples file:$(srcdir)/$$test $$baseuri > $$name.res 2> $$name.err; \
+	  $(RAPPER) -q -i trig -o nquads file:$(srcdir)/$$test $$baseuri > $$name.res 2> $$name.err; \
 	  status=$$?; \
 	  if test $$status != 0 -a $$status != 2 ; then \
 	    $(RECHO) "FAILED returned status $$status"; result=1; \
-	    $(RECHO) $(RAPPER) -q -i trig -o ntriples $(srcdir)/$$test $$baseuri '>' $$name.res; \
+	    $(RECHO) $(RAPPER) -q -i trig -o nquads $(srcdir)/$$test $$baseuri '>' $$name.res; \
 	    cat $$name.err; \
 	    errors=`expr $$errors + 1`; \
 	    failures="$$failures $$test"; \
@@ -527,25 +527,25 @@ check-bad-trig: build-rapper $(check_bad_trig_deps)
 	  name=`basename $$test .trig` ; \
 	  baseuri=$(BASE_URI)$$test; \
 	  $(RECHO) $(RECHO_N) "Checking $$test $(RECHO_C)"; \
-	  $(RAPPER) -q -i trig -o ntriples file:$(srcdir)/$$test $$baseuri > $$name.res 2> $$name.err; \
+	  $(RAPPER) -q -i trig -o nquads file:$(srcdir)/$$test $$baseuri > $$name.res 2> $$name.err; \
 	  status=$$?; \
 	  if test $$status -eq 1 ; then \
 	    $(RECHO) "ok"; \
 	  elif test $$status -eq 2 ; then \
 	    $(RECHO) "FAILED - parsing succeeded with a warning";  result=1; \
-	    $(RECHO) $(RAPPER) -q -i trig -o ntriples file:$(srcdir)/$$test $$baseuri '>' $$name.res; \
+	    $(RECHO) $(RAPPER) -q -i trig -o nquads file:$(srcdir)/$$test $$baseuri '>' $$name.res; \
 	    cat $$name.res; grep Warning $$name.err; \
 	    errors=`expr $$errors + 1`; \
 	    failures="$$failures $$test"; \
 	  elif test $$status -eq 0 ; then \
 	    $(RECHO) "FAILED - parsing succeeded but should have failed"; result=1; \
-	    $(RECHO) $(RAPPER) -q -i trig -o ntriples file:$(srcdir)/$$test $$baseuri '>' $$name.res; \
+	    $(RECHO) $(RAPPER) -q -i trig -o nquads file:$(srcdir)/$$test $$baseuri '>' $$name.res; \
 	    cat $$name.res; \
 	    errors=`expr $$errors + 1`; \
 	    failures="$$failures $$test"; \
 	  else \
 	    $(RECHO) "FAILED - parsing failed with unknown status $$status"; result=1; \
-	    $(RECHO) $(RAPPER) -q -i trig -o ntriples file:$(srcdir)/$$test $$baseuri '>' $$name.res; \
+	    $(RECHO) $(RAPPER) -q -i trig -o nquads file:$(srcdir)/$$test $$baseuri '>' $$name.res; \
 	    cat $$name.err; \
 	    cat $$name.res; \
 	    errors=`expr $$errors + 1`; \
@@ -568,16 +568,16 @@ check-eval-trig: build-rapper $(check_eval_trig_deps)
 	  name=`basename $$test .trig` ; \
 	  baseuri=$(BASE_URI)$$test; \
 	  $(RECHO) $(RECHO_N) "Checking $$test $(RECHO_C)"; \
-	  $(RAPPER) -q -i trig -o ntriples $(srcdir)/$$name.nq > $$name.nnt; \
-	  $(RAPPER) -q -i trig -o ntriples $(srcdir)/$$test $$baseuri > $$name.res 2> $$name.err; \
+	  $(RAPPER) -q -i trig -o nquads $(srcdir)/$$name.nq > $$name.nnq; \
+	  $(RAPPER) -q -i trig -o nquads $(srcdir)/$$test $$baseuri > $$name.res 2> $$name.err; \
 	  status=$$?; \
 	  if test $$status != 0 -a $$status != 2 ; then \
 	    $(RECHO) "FAILED returned status $$status"; result=1; \
-	    $(RECHO) $(RAPPER) -q -i trig -o ntriples $(srcdir)/$$test $$baseuri '>' $$name.res; \
+	    $(RECHO) $(RAPPER) -q -i trig -o nquads $(srcdir)/$$test $$baseuri '>' $$name.res; \
 	    cat $$name.err; \
 	    errors=`expr $$errors + 1`; \
 	    failures="$$failures $$test"; \
-	  elif $(RDFCOMPARE) $$name.nnt $$name.res >/dev/null 2>&1; then \
+	  elif $(RDFCOMPARE) $$name.nnq $$name.res >/dev/null 2>&1; then \
 	    if test $$status = 2 ; then \
 	      $(RECHO) "ok with warnings"; grep Warning $$name.err; \
 	    else \
@@ -585,13 +585,13 @@ check-eval-trig: build-rapper $(check_eval_trig_deps)
 	    fi; \
 	  else \
 	    $(RECHO) "FAILED"; result=1; \
-	    $(RECHO) $(RAPPER) -q -i trig -o ntriples $(srcdir)/$$test $$baseuri '>' $$name.res; \
+	    $(RECHO) $(RAPPER) -q -i trig -o nquads $(srcdir)/$$test $$baseuri '>' $$name.res; \
 	    cat $$name.err; \
-	    diff $$name.nnt $$name.res; \
+	    diff $$name.nnq $$name.res; \
 	    errors=`expr $$errors + 1`; \
 	    failures="$$failures $$test"; \
 	  fi; \
-	  rm -f $$name.res $$name.err $$name.nnt; \
+	  rm -f $$name.res $$name.err $$name.nnq; \
 	done; \
 	$(RECHO) "Result: $$errors errors: $$failures"; \
 	set -e; exit $$result
