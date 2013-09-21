@@ -1595,7 +1595,7 @@ raptor_parser_get_content(raptor_parser* rdf_parser, size_t* length_p)
 
 
 void 
-raptor_parser_start_graph(raptor_parser* parser, raptor_uri* uri,
+raptor_parser_start_graph(raptor_parser* parser, raptor_term* term,
                           int is_declared)
 {
   int flags = RAPTOR_GRAPH_MARK_START;
@@ -1605,13 +1605,18 @@ raptor_parser_start_graph(raptor_parser* parser, raptor_uri* uri,
   if(!parser->emit_graph_marks)
     return;
   
-  if(parser->graph_mark_handler)
-    (*parser->graph_mark_handler)(parser->user_data, uri, flags);
+  if(term && term->type == RAPTOR_TERM_TYPE_URI) {
+    if(parser->graph_mark_handler)
+      (*parser->graph_mark_handler)(parser->user_data, term->value.uri, flags);
+  }
+  /* FIXME - add new graph mark handler taking a term */
+
 }
 
 
 void 
-raptor_parser_end_graph(raptor_parser* parser, raptor_uri* uri, int is_declared)
+raptor_parser_end_graph(raptor_parser* parser, raptor_term* term,
+                        int is_declared)
 {
   int flags = 0;
   if(is_declared)
@@ -1620,8 +1625,12 @@ raptor_parser_end_graph(raptor_parser* parser, raptor_uri* uri, int is_declared)
   if(!parser->emit_graph_marks)
     return;
   
-  if(parser->graph_mark_handler)
-    (*parser->graph_mark_handler)(parser->user_data, uri, flags);
+  if(term && term->type == RAPTOR_TERM_TYPE_URI) {
+    if(parser->graph_mark_handler)
+      (*parser->graph_mark_handler)(parser->user_data, term->value.uri, flags);
+  }
+
+  /* FIXME - add new graph mark handler taking a term */
 }
 
 
