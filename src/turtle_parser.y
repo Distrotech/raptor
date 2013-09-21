@@ -145,7 +145,6 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 /* literals */
 %token <string> STRING_LITERAL "string literal"
 %token <uri> URI_LITERAL "URI literal"
-%token <uri> GRAPH_NAME_LEFT_CURLY "Graph URI literal {"
 %token <string> BLANK_LITERAL "blank node"
 %token <uri> QNAME_LITERAL "QName"
 %token <string> IDENTIFIER "identifier"
@@ -157,7 +156,7 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 /* syntax error */
 %token ERROR_TOKEN
 
-%type <identifier> subject predicate object verb literal resource blankNode collection blankNodePropertyList
+%type <identifier> subject predicate object verb literal resource blankNode collection blankNodePropertyList graph_term
 %type <sequence> objectList itemList predicateObjectList predicateObjectListOpt
 
 /* tidy up tokens after errors */
@@ -175,7 +174,7 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 %destructor {
   if($$)
     raptor_free_term($$);
-} subject predicate object verb literal resource blankNode collection
+} subject predicate object verb literal resource blankNode collection graph_term
 
 %destructor {
   if($$)
@@ -187,8 +186,17 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 Document : statementList
 ;;
 
+graph_term: resource
+{
+  $$ = $1;
+}
+| blankNode
+{
+  $$ = $1;
+}
+;
 
-graph: GRAPH_NAME_LEFT_CURLY
+graph: graph_term LEFT_CURLY
   {
     /* action in mid-rule so this is run BEFORE the triples in graphBody */
     raptor_parser* parser = (raptor_parser *)rdf_parser;
@@ -198,11 +206,8 @@ graph: GRAPH_NAME_LEFT_CURLY
     if(!turtle_parser->trig)
       turtle_parser_error(rdf_parser, "{ ... } is not allowed in Turtle");
     else {
-      if(turtle_parser->graph_name)
-        raptor_free_term(turtle_parser->graph_name);
-      turtle_parser->graph_name = raptor_new_term_from_uri(((raptor_parser*)rdf_parser)->world, $1);
-      raptor_free_uri($1);
-      raptor_parser_start_graph(parser, turtle_parser->graph_name->value.uri, 1);
+      turtle_parser->graph_name = $1;
+      raptor_parser_start_graph(parser, turtle_parser->graph_name, 1);
     }
   }
   graphBody RIGHT_CURLY
@@ -213,7 +218,7 @@ graph: GRAPH_NAME_LEFT_CURLY
   turtle_parser = (raptor_turtle_parser*)parser->context;
 
   if(turtle_parser->trig) {
-    raptor_parser_end_graph(parser, turtle_parser->graph_name->value.uri, 1);
+    raptor_parser_end_graph(parser, turtle_parser->graph_name, 1);
     raptor_free_term(turtle_parser->graph_name);
     turtle_parser->graph_name = NULL;
     parser->emitted_default_graph = 0;

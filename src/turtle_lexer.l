@@ -418,60 +418,6 @@ EXPONENT [eE][+-]?[0-9]+
                   yyterminate();  }
 
 
-{IRI}[\ \t\v\n]*("=")?[\ \t\v\n]*"{"   {
-                  raptor_stringbuffer* sb;
-                  unsigned char* uri_string;
-
-                  /* make length just the IRI */
-                  while(yytext[yyleng - 1] != '>')
-                    yyleng--;
-
-                  sb = raptor_new_stringbuffer();
-                  if(!sb)
-                    TURTLE_LEXER_OOM();
-
-                  /* start at yytext + 1 to skip '<' and operate over
-                   * length-2 bytes to skip '<' and '>'
-                   */
-                  if(raptor_stringbuffer_append_turtle_string(sb, (unsigned char*)yytext+1, yyleng-2, '>', (raptor_simple_message_handler)turtle_lexer_syntax_error, rdf_parser)) {
-                    raptor_free_stringbuffer(sb);
-                    YY_FATAL_ERROR_EOF("raptor_stringbuffer_append_turtle_string failed");
-                  }
-                  uri_string = raptor_stringbuffer_as_string(sb);
-
-                  if(!raptor_turtle_check_uri_string(uri_string)) {
-                    turtle_syntax_error(rdf_parser, "URI '%s' contains bad character(s)", uri_string);
-                    yyterminate();
-                  } else if(!*uri_string)
-                    turtle_parser_lval->uri = raptor_uri_copy(rdf_parser->base_uri);
-                  else
-                    turtle_parser_lval->uri = raptor_new_uri_relative_to_base(rdf_parser->world, rdf_parser->base_uri, uri_string);
-
-                  raptor_free_stringbuffer(sb);
-
-                  if(!turtle_parser_lval->uri)
-                    TURTLE_LEXER_OOM();
-                return GRAPH_NAME_LEFT_CURLY; }
-
-{QNAME}[\ \t\v\n]*("=")?[\ \t\v\n]*"{"   {
-               while(1) {
-                  int c = yytext[yyleng - 1];
-                  if(c == '{' || c == ' ' || c=='\t' || c == '\v' || c == '\n' ||
-                     c == '=') {
-                    yyleng--;
-                  } else
-                    break;
-                }
-                yytext[yyleng] = '\0';
-
-                turtle_parser_lval->uri = turtle_qname_to_uri(rdf_parser, (unsigned char*)yytext, yyleng);
-                if(!turtle_parser_lval->uri) {
-                  turtle_lexer_error(yyscanner, RAPTOR_LOG_LEVEL_ERROR, "Failed to convert qname %s to URI", yytext);
-                  yyterminate();
-                }
-
-                return GRAPH_NAME_LEFT_CURLY; }
-
 {IRI}   { if(yyleng == 2) 
                   turtle_parser_lval->uri = raptor_uri_copy(rdf_parser->base_uri);
                 else {
