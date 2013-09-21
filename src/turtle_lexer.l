@@ -220,6 +220,7 @@ EXPONENT [eE][+-]?[0-9]+
 		return SPARQL_PREFIX; }
 "@base"   { return BASE; }
 [Bb][Aa][Ss][Ee] { return SPARQL_BASE; }
+[Gg][Rr][Aa][Pp][Hh] { return SPARQL_GRAPH; }
 "^^"      { return HAT; }
 "("       { return LEFT_ROUND; }
 ")"       { return RIGHT_ROUND; }
@@ -879,10 +880,15 @@ turtle_token_print(raptor_world* world, int token, YYSTYPE *lval)
   
   switch(token) {
     case PREFIX:
+    case SPARQL_PREFIX:
       return "PREFIX";
 
     case BASE:
+    case SPARQL_BASE:
       return "BASE";
+
+    case SPARQL_GRAPH:
+      return "GRAPH";
 
     case A:
       return "A";

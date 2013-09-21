@@ -140,6 +140,7 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 %token BASE "@base"
 %token SPARQL_PREFIX "PREFIX"
 %token SPARQL_BASE "BASE"
+%token SPARQL_GRAPH "GRAPH"
 
 /* literals */
 %token <string> STRING_LITERAL "string literal"
@@ -218,8 +219,7 @@ graph: GRAPH_NAME_LEFT_CURLY
     parser->emitted_default_graph = 0;
   }
 }
-|
-LEFT_CURLY
+| LEFT_CURLY
   {
     /* action in mid-rule so this is run BEFORE the triples in graphBody */
     raptor_parser* parser = (raptor_parser *)rdf_parser;
@@ -264,8 +264,12 @@ statementList: statementList statement
 | /* empty */
 ;
 
+GraphOpt: SPARQL_GRAPH
+| /* empty */
+;
+
 statement: directive
-| graph
+| GraphOpt graph
 | triples DOT
 ;
 
