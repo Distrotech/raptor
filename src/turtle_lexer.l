@@ -111,6 +111,9 @@ static unsigned char *turtle_copy_token(unsigned char *text, size_t len);
 static unsigned char *turtle_copy_string_token(raptor_parser* rdf_parser, unsigned char *text, size_t len, int delim);
 void turtle_lexer_syntax_error(void* ctx, const char *message, ...) RAPTOR_PRINTF_FORMAT(2, 3);
 
+#undef RAPTOR_DEBUG
+#define RAPTOR_DEBUG 3
+
 #ifdef RAPTOR_DEBUG
 const char * turtle_token_print(raptor_world* world, int token, YYSTYPE *lval);
 #endif

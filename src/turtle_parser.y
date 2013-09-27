@@ -56,6 +56,9 @@
 #include <turtle_common.h>
 
 
+#undef RAPTOR_DEBUG
+#define RAPTOR_DEBUG 3
+
 /* Make verbose error messages for syntax errors */
 #ifdef RAPTOR_DEBUG
 #define YYERROR_VERBOSE 1
@@ -156,7 +159,7 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 /* syntax error */
 %token ERROR_TOKEN
 
-%type <identifier> subject predicate object verb literal resource blankNode collection blankNodePropertyList graph_term
+%type <identifier> subject predicate object verb literal resource blankNode collection blankNodePropertyList labelOrSubject
 %type <sequence> objectList itemList predicateObjectList predicateObjectListOpt
 
 /* tidy up tokens after errors */
@@ -174,7 +177,7 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 %destructor {
   if($$)
     raptor_free_term($$);
-} subject predicate object verb literal resource blankNode collection graph_term
+} subject predicate object verb literal resource blankNode collection labelOrSubject
 
 %destructor {
   if($$)
@@ -186,7 +189,7 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 Document : statementList
 ;;
 
-graph_term: resource
+labelOrSubject: resource
 {
   $$ = $1;
 }
@@ -196,7 +199,7 @@ graph_term: resource
 }
 ;
 
-graph: graph_term LEFT_CURLY
+graph: labelOrSubject LEFT_CURLY
   {
     /* action in mid-rule so this is run BEFORE the triples in graphBody */
     raptor_parser* parser = (raptor_parser *)rdf_parser;
@@ -753,11 +756,7 @@ base: BASE URI_LITERAL DOT
 }
 ;
 
-subject: resource
-{
-  $$ = $1;
-}
-| blankNode
+subject: labelOrSubject
 {
   $$ = $1;
 }
@@ -775,11 +774,7 @@ predicate: resource
 ;
 
 
-object: resource
-{
-  $$ = $1;
-}
-| blankNode
+object: labelOrSubject
 {
   $$ = $1;
 }
