@@ -159,8 +159,8 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 /* syntax error */
 %token ERROR_TOKEN
 
-%type <identifier> subject predicate object verb literal resource blankNode collection blankNodePropertyList labelOrSubject
-%type <sequence> objectList itemList predicateObjectList predicateObjectListOpt
+%type <identifier> subject predicate object verb literal resource blankNode collection blankNodePropertyList labelOrSubject triples2p1
+%type <sequence> objectList itemList predicateObjectList predicateObjectListOpt triplesOrGraph triplesOrGraph2Opt triples triplesBlock triplesBlockOpt dotTriplesOpt wrappedGraph
 
 /* tidy up tokens after errors */
 
@@ -186,8 +186,140 @@ static void raptor_turtle_generate_statement(raptor_parser *parser, raptor_state
 
 %%
 
-Document : statementList
-;;
+Document : dorbList
+;
+
+dorbList: dorbList dorB
+| /* empty */
+;
+
+dorB: directive
+| block
+;
+
+
+block : triplesOrGraph
+{
+  /* FIXME generate */
+}
+| wrappedGraph
+{
+  /* FIXME generate */
+}
+| triples2
+{
+  /* FIXME generate */
+}
+| SPARQL_GRAPH labelOrSubject wrappedGraph
+{
+  /* FIXME join and generate */
+}
+;
+
+triplesOrGraph: labelOrSubject triplesOrGraph2Opt
+{
+  /* FIXME join */
+  $$ = $2;
+}
+;
+
+triplesOrGraph2Opt: wrappedGraph
+{
+  $$ = $1;
+}
+| predicateObjectList DOT
+{
+  $$ = $1;
+}
+| /* empty */
+{
+  $$ = NULL;
+}
+;
+
+triples2: triples2p1 predicateObjectListOpt DOT
+{
+  int i;
+
+#if defined(RAPTOR_DEBUG) && RAPTOR_DEBUG > 1  
+  printf("triples2 1\n subject=");
+  if($1)
+    raptor_term_print_as_ntriples($1, stdout);
+  else
+    fputs("NULL", stdout);
+  if($2) {
+    printf("\n predicateObjectListOpt (reverse order to syntax)=");
+    raptor_sequence_print($2, stdout);
+    printf("\n");
+  } else     
+    printf("\n and empty predicateObjectListOpt\n");
+#endif
+
+  if($1 && $2) {
+    /* have subject and non-empty property list, handle it  */
+    for(i = 0; i < raptor_sequence_size($2); i++) {
+      raptor_statement* t2 = (raptor_statement*)raptor_sequence_get_at($2, i);
+      t2->subject = raptor_term_copy($1);
+    }
+#if defined(RAPTOR_DEBUG) && RAPTOR_DEBUG > 1  
+    printf(" after substitution predicateObjectListOpt=");
+    raptor_sequence_print($2, stdout);
+    printf("\n\n");
+#endif
+    for(i = 0; i < raptor_sequence_size($2); i++) {
+      raptor_statement* t2 = (raptor_statement*)raptor_sequence_get_at($2, i);
+      raptor_turtle_generate_statement((raptor_parser*)rdf_parser, t2);
+    }
+  }
+
+  if($2)
+    raptor_free_sequence($2);
+
+  if($1)
+    raptor_free_term($1);
+}
+;
+
+triples2p1: blankNodePropertyList
+{
+  $$ = $1;
+}
+| collection
+{
+  $$ = $1;
+}
+;
+
+wrappedGraph : LEFT_CURLY triplesBlockOpt RIGHT_CURLY
+{
+  $$ = $2;
+}
+;
+
+triplesBlock : triples dotTriplesOpt
+{
+  if($1) {
+    int i;
+    
+    for(i = 0; i < raptor_sequence_size($2); i++) {
+      raptor_statement* t2 = (raptor_statement*)raptor_sequence_get_at($1, i);
+      raptor_turtle_generate_statement((raptor_parser*)rdf_parser, t2);
+    }
+
+    raptor_free_sequence($1);
+  }
+}
+;
+
+triplesBlockOpt: triplesBlock
+{
+  $$ = $1;
+}
+| /* empty */
+{
+  $$  = NULL;
+}
+;
 
 labelOrSubject: resource
 {
@@ -260,16 +392,22 @@ graphBody: triplesList
 /* empty */
 ;
 
+dotTriplesOpt: DOT triplesBlockOpt
+{
+  $$ = $2;
+}
+| /* empty */
+{
+  $$ = NULL;
+}
+;
+
 triplesList: dotTriplesList
 | dotTriplesList DOT
 ;
 
 dotTriplesList: triples
 | dotTriplesList DOT triples
-;
-
-statementList: statementList statement
-| /* empty */
 ;
 
 GraphOpt: SPARQL_GRAPH
@@ -283,8 +421,6 @@ statement: directive
 
 triples: subject predicateObjectList
 {
-  int i;
-
 #if defined(RAPTOR_DEBUG) && RAPTOR_DEBUG > 1  
   printf("triples 1\n subject=");
   if($1)
@@ -300,6 +436,7 @@ triples: subject predicateObjectList
 #endif
 
   if($1 && $2) {
+    int i;
     /* have subject and non-empty property list, handle it  */
     for(i = 0; i < raptor_sequence_size($2); i++) {
       raptor_statement* t2 = (raptor_statement*)raptor_sequence_get_at($2, i);
@@ -310,17 +447,12 @@ triples: subject predicateObjectList
     raptor_sequence_print($2, stdout);
     printf("\n\n");
 #endif
-    for(i = 0; i < raptor_sequence_size($2); i++) {
-      raptor_statement* t2 = (raptor_statement*)raptor_sequence_get_at($2, i);
-      raptor_turtle_generate_statement((raptor_parser*)rdf_parser, t2);
-    }
   }
-
-  if($2)
-    raptor_free_sequence($2);
 
   if($1)
     raptor_free_term($1);
+
+  $$ = $2;
 }
 | blankNodePropertyList predicateObjectListOpt
 {
@@ -351,19 +483,17 @@ triples: subject predicateObjectList
     raptor_sequence_print($2, stdout);
     printf("\n\n");
 #endif
-    for(i = 0; i < raptor_sequence_size($2); i++) {
-      raptor_statement* t2 = (raptor_statement*)raptor_sequence_get_at($2, i);
-      raptor_turtle_generate_statement((raptor_parser*)rdf_parser, t2);
-    }
   }
-
-  if($2)
-    raptor_free_sequence($2);
 
   if($1)
     raptor_free_term($1);
+
+  $$ = $2;
 }
 | error DOT
+{
+  $$ = NULL;
+}
 ;
 
 
