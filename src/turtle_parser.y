@@ -72,7 +72,7 @@ const char * turtle_token_print(raptor_world* world, int token, YYSTYPE *lval);
 
 /* Slow down the grammar operation and watch it work */
 #if defined(RAPTOR_DEBUG) && RAPTOR_DEBUG > 2
-#undef YYDEBUG 1
+#undef YYDEBUG
 #define YYDEBUG 1
 #endif
 
