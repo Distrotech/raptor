@@ -70,6 +70,14 @@ AM_SANITY_CHECK
 AM_PROG_AR
 AC_PROG_CC
 AM_PROG_CC_C_O
+AC_MSG_CHECKING(whether $CC is clang)
+CC_IS_CLANG=no
+if $CC 2>&1 | grep clang >/dev/null 2>&1; then
+  CC_IS_CLANG=yes
+else
+  :
+fi
+AC_MSG_RESULT($CC_IS_CLANG)
 
 dnl Initialize libtool
 LT_INIT
@@ -148,6 +156,8 @@ fi
 # Find a tar command for 'make dist'
 AC_CHECK_PROGS(TAR, gnutar gtar tar)
 AC_CHECK_PROGS(PERL, perl)
+# Used in tests/feeds
+AC_CHECK_PROG(JING, jing)
 
 AM_MISSING_PROG(ACLOCAL, aclocal, $missing_dir)
 AM_MISSING_PROG(AUTOCONF, autoconf, $missing_dir)
@@ -178,6 +188,10 @@ dnl compiler checks
 AC_DEFUN([REDLAND_CC_TRY_FLAG], [
   AC_MSG_CHECKING([whether $CC supports $1])
   redland_save_CFLAGS="$CFLAGS"
+  if test $CC_IS_CLANG = yes; then
+    # Make unknown warnings into errors for clang so the test below works
+    CFLAGS="-Werror $CFLAGS"
+  fi
   CFLAGS="$CFLAGS $1"
   AC_COMPILE_IFELSE([AC_LANG_SOURCE([ ])], [redland_cc_flag=yes], [redland_cc_flag=no])
   CFLAGS="$redland_save_CFLAGS"
@@ -457,7 +471,7 @@ else
   PKG_CHECK_MODULES([LIBXML],[libxml-2.0],[
     LIBXML_VERSION=`$PKG_CONFIG libxml-2.0 --modversion`
     libxml_source="pkg-config"
-  ], [])
+  ], [:])
   AC_MSG_CHECKING(for libxml via pkg-config)
 fi
 
@@ -527,7 +541,7 @@ else
   PKG_CHECK_MODULES([LIBCURL],[libcurl],[
     LIBCURL_VERSION=`$PKG_CONFIG libcurl --modversion`
     libcurl_source="pkg-config"
-  ], [])
+  ], [:])
   AC_MSG_CHECKING(for libcurl via pkg-config)
 fi
 
