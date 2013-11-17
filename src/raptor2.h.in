@@ -942,6 +942,21 @@ typedef enum {
  */
 typedef int (*raptor_data_compare_handler)(const void* data1, const void* data2);
 
+/**
+ * raptor_data_thunk_compare_handler:
+ * @thunk: user data object
+ * @data1: first data object
+ * @data2: second data object
+ *
+ * Function to compare two data objects with context like used with qsort_r()
+ *
+ * Designed to be passed into generic data structure constructors
+ * like raptor_sequence_sort_r().
+ *
+ * Return value: compare value <0 if @data1 is before @data2, =0 if equal, >0 if @data1 is after @data2
+ */
+typedef int (*raptor_data_thunk_compare_handler)(void* thunk, const void* data1, const void* data2);
+
 
 /**
  * raptor_data_malloc_handler:
@@ -1557,6 +1572,8 @@ void* raptor_sequence_delete_at(raptor_sequence* seq, int idx);
 
 RAPTOR_API
 void raptor_sequence_sort(raptor_sequence* seq, raptor_data_compare_handler compare);
+RAPTOR_API
+void raptor_sequence_sort_r(raptor_sequence* seq, void* thunk, raptor_data_thunk_compare_handler compare);
 RAPTOR_API
 int raptor_sequence_swap(raptor_sequence* seq, int i, int j);
 RAPTOR_API

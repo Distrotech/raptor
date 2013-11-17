@@ -539,6 +539,34 @@ raptor_sequence_sort(raptor_sequence* seq, raptor_data_compare_handler compare)
 
 
 /**
+ * raptor_sequence_sort_r:
+ * @seq: sequence to sort
+ * @thunk: thunk
+ * @compare: comparison function
+ * 
+ * Sort a sequence inline
+ *
+ * The comparison function @compare is compatible with that used for
+ * qsort_r() and is given the value of @thunk plus the addresses of
+ * pointers to the data that must be dereferenced to get to the
+ * stored sequence data.
+ * 
+ **/
+RAPTOR_EXTERN_C
+void
+raptor_sequence_sort_r(raptor_sequence* seq, void* thunk,
+                       raptor_data_thunk_compare_handler compare)
+{
+  RAPTOR_ASSERT_OBJECT_POINTER_RETURN(seq, raptor_sequence);
+
+  if(seq->size > 1)
+    qsort_r(&seq->sequence[seq->start], seq->size, sizeof(void*), thunk,
+            compare);
+}
+
+
+
+/**
  * raptor_sequence_print:
  * @seq: sequence to sort
  * @fh: file handle
